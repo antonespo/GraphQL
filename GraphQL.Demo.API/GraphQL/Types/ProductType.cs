@@ -22,10 +22,11 @@ namespace CarvedRock.Api.GraphQL.Types
             Field<ProductTypeEnumType>("Type", "The type of product");
             Field<ListGraphType<ProductReviewType>>(
                 "reviews",
-                //resolve: context => reviewRepo.GetForProduct(context.Source.Id));
+                // Con Data Loader: approccio performante
                 resolve: context =>
                 {
                     var user = (ClaimsPrincipal)context.UserContext;
+                    //..
 
                     var loader = dataLoaderAccessor.Context.GetOrAddCollectionBatchLoader<int, ProductReview>(
                         "GetReviewByProductId", reviewRepo.GetForProducts);

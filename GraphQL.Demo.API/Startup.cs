@@ -1,6 +1,8 @@
-﻿using CarvedRock.Api.Data;
+﻿using CarvedRock.Api;
+using CarvedRock.Api.Data;
 using CarvedRock.Api.GraphQL;
 using CarvedRock.Api.Repositories;
+using GraphQL.Demo.API.GraphQL;
 using GraphQL.Server;
 using GraphQL.Server.Ui.Playground;
 using Microsoft.AspNetCore.Builder;
@@ -10,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 
 namespace GraphQL.Demo.API
 {
@@ -35,11 +38,14 @@ namespace GraphQL.Demo.API
 
             services.AddScoped<IDependencyResolver>(s => new FuncDependencyResolver(s.GetRequiredService));
             services.AddScoped<CarvedRockSchema>();
+            services.AddSingleton<IDocumentExecuter, SerialDocumentExecuter>();
+            services.AddSingleton<ReviewMessageService>();
 
             services.AddGraphQL(o => { o.ExposeExceptions = false; })
                 .AddGraphTypes(ServiceLifetime.Scoped)
                 .AddUserContextBuilder(httpContext => httpContext.User)
-                .AddDataLoader();
+                .AddDataLoader()
+                .AddWebSockets();
 
             services.Configure<KestrelServerOptions>(o => o.AllowSynchronousIO = true);
         }
@@ -63,6 +69,8 @@ namespace GraphQL.Demo.API
                 endpoints.MapControllers();
             });
 
+            app.UseWebSockets();
+            app.UseGraphQLWebSockets<CarvedRockSchema>("/graphql");
             app.UseGraphQL<CarvedRockSchema>();
             app.UseGraphQLPlayground(new GraphQLPlaygroundOptions());
         }
